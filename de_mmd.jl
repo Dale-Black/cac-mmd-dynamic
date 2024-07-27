@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.42
+# v0.19.40
 
 using Markdown
 using InteractiveUtils
@@ -31,9 +31,6 @@ using LinearAlgebra: det
 
 # ╔═╡ 42b57d75-3b39-4c61-995d-8d0b20a6a7df
 using PythonCall
-
-# ╔═╡ 9436fe52-bd76-444a-ac6b-6cc95271685a
-using ProgressLogging
 
 # ╔═╡ dd80ed67-d7c9-4551-a35f-c068f095d8a9
 md"""
@@ -571,7 +568,7 @@ function mmd_algorithm(low_e_image, high_e_image, list_of_triangles, vertices)
 	)
 	water_map = zeros(size(low_e_image))
 
-	@progress for  px in 1:total_pixels
+	for px in 1:total_pixels
 		row = div(px - 1, size(low_e_image, 1)) + 1
 		col = mod(px - 1, size(low_e_image, 2)) + 1
 
@@ -636,7 +633,7 @@ begin
 end;
 
 # ╔═╡ e3c007c5-e536-4b8f-ac05-f80396b630aa
-water_map, ca_maps, i_maps = mmd_algorithm(low_e_dcm_masked, high_e_dcm_masked, list_of_triangles, vertices)
+water_map, ca_maps, i_maps = mmd_algorithm(low_e_dcm_masked, high_e_dcm_masked, list_of_triangles, vertices);
 
 # ╔═╡ 47785370-5b32-464e-bde5-f359215a3395
 function calculate_final_density_maps(water_map, ca_maps, i_maps)
@@ -691,6 +688,11 @@ let
 	f
 end
 
+# ╔═╡ b5f74b05-a95d-429a-9de1-1c8562f3eff2
+md"""
+## Registration
+"""
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -700,7 +702,6 @@ DICOM = "a26e6606-dd52-5f6a-a97f-4f611373d757"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
-ProgressLogging = "33c8b6b6-d38a-422a-b730-caa89a2f386c"
 PythonCall = "6099a3de-0909-46bc-b1f4-468b9a2dfc0d"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
@@ -711,7 +712,6 @@ CondaPkg = "~0.2.23"
 DICOM = "~0.10.1"
 OrderedCollections = "~1.6.3"
 PlutoUI = "~0.7.59"
-ProgressLogging = "~0.1.4"
 PythonCall = "~0.9.21"
 """
 
@@ -721,7 +721,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.4"
 manifest_format = "2.0"
-project_hash = "cd9da5248adf4163feee22e9651fb799d18469a5"
+project_hash = "870c090fd12374006453b90808eef6a500408886"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -1715,12 +1715,6 @@ version = "1.4.3"
 deps = ["Unicode"]
 uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 
-[[deps.ProgressLogging]]
-deps = ["Logging", "SHA", "UUIDs"]
-git-tree-sha1 = "80d919dee55b9c50e8d9e2da5eeafff3fe58b539"
-uuid = "33c8b6b6-d38a-422a-b730-caa89a2f386c"
-version = "0.1.4"
-
 [[deps.ProgressMeter]]
 deps = ["Distributed", "Printf"]
 git-tree-sha1 = "763a8ceb07833dd51bb9e3bbca372de32c0605ad"
@@ -2273,12 +2267,12 @@ version = "3.5.0+0"
 # ╠═d7da1045-d598-4f0e-9414-da282b71cb4b
 # ╠═5ca24cf2-e4fe-463e-8b09-7c4ffcf48ff3
 # ╟─d9218299-dc81-402c-887e-a3593a660cd4
-# ╠═9436fe52-bd76-444a-ac6b-6cc95271685a
 # ╠═619f81c2-2cec-4ac5-b7f9-def57106a176
 # ╠═e21b0851-ed5b-444a-a322-a8636e7f59a8
 # ╠═e3c007c5-e536-4b8f-ac05-f80396b630aa
 # ╠═47785370-5b32-464e-bde5-f359215a3395
 # ╠═84ce2c06-5222-45cb-804a-a08229887c94
 # ╟─da375fb5-7d6e-4339-84ba-e803c3a62680
+# ╟─b5f74b05-a95d-429a-9de1-1c8562f3eff2
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
