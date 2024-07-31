@@ -90,126 +90,15 @@ path_80kv = joinpath(pwd(), "data/80kV 40.dcm")
 path_135kv = joinpath(pwd(), "data/135kV 40.dcm")
 
 # ╔═╡ a30419d5-2ca0-4af8-bc2b-676dcda84f60
-path_70_keV = joinpath(pwd(), "data/MonoE 70keV 200mA.dcm")
+path_70_keV = joinpath(pwd(), "data/70keV140mA 2.dcm")
 
 # ╔═╡ ab512723-b5e5-496c-99c6-2277f70bb0a0
-path_150_keV = joinpath(pwd(), "data/MonoE 150keV 140mA.dcm")
+path_150_keV = joinpath(pwd(), "data/150keV.dcm")
 
 # ╔═╡ 179fb57b-10c6-44c0-a47e-4d0d96f9f71b
 md"""
 ## Dictionaries
 """
-
-# ╔═╡ cb9c781d-af43-4b86-bce6-f20e85fa9fc5
-const LOW_ENERGY = 70keV
-
-# ╔═╡ 61b66504-9f2c-43ab-893d-38534a1f52d2
-const HIGH_ENERGY = 150keV
-
-# ╔═╡ d36cef03-cba4-474a-83d5-786f4f88fe13
-begin
-	lac_water_low_energy = μ(Materials.water, LOW_ENERGY)
-	lac_water_high_energy = μ(Materials.water, HIGH_ENERGY)
-
-	lac_calcium_low_energy = μ(Elements.Calcium, LOW_ENERGY)
-	lac_calcium_high_energy = μ(Elements.Calcium, HIGH_ENERGY)
-
-	lac_iodine_low_energy = μ(Elements.Iodine, LOW_ENERGY)
-	lac_iodine_high_energy = μ(Elements.Iodine, HIGH_ENERGY)
-end
-
-# ╔═╡ 02406107-5e5d-4311-9211-feb5ec960b22
-begin
-	const DENSITY_WATER = 1.0g/cm^3
-	const DENSITY_CALCIUM = 1.55g/cm^3
-	const CONCENTRATION_CALCIUM = 0.5g/cm^3
-	const CONCENTRATION_IODINE = 0.02g/cm^3
-end
-
-# ╔═╡ 30660da1-1406-4f0d-945b-c57cd200d547
-begin
-	const HEIGHT_ROD = 6.026cm
-	const DIAMETER_ROD = 2.837cm
-	const TOTAL_MASS_CALCIUM_ROD = 71.051g
-	const TOTAL_MASS_IODINE_ROD = 39.476g
-end
-
-# ╔═╡ 8881b973-3fac-4bf7-8f7c-fc6496e2e77d
-function calculate_lac(
-	height, 
-	diameter, 
-	concentration, 
-	total_mass, 
-	lac_material_low,
-	lac_water_low)
-	
-	volume = π * (diameter/2)^2 * height
-	mass_material = concentration * volume
-	mass_water = total_mass - mass_material
-	material_mass_fraction = mass_material / total_mass
-	water_mass_fraction = 1 - material_mass_fraction
-	
-	lac = (material_mass_fraction * lac_material_low) + (water_mass_fraction * lac_water_low)
-	
-	return lac
-end
-
-# ╔═╡ 7ab8d452-4768-4aef-b026-89c0984218f1
-lac_calcium_rod_low_energy = calculate_lac(
-	HEIGHT_ROD, 
-	DIAMETER_ROD, 
-	CONCENTRATION_CALCIUM, 
-	TOTAL_MASS_CALCIUM_ROD, 
-	lac_calcium_low_energy,
-	lac_water_low_energy
-)
-
-# ╔═╡ 47ea20b3-01e3-4e48-a446-9d54aeefde40
-lac_calcium_rod_high_energy = calculate_lac(
-	HEIGHT_ROD, 
-	DIAMETER_ROD, 
-	CONCENTRATION_CALCIUM, 
-	TOTAL_MASS_CALCIUM_ROD, 
-	lac_calcium_high_energy,
-	lac_water_high_energy
-)
-
-# ╔═╡ f8c6b4ea-af7d-47a0-a837-169522187b26
-lac_iodine_rod_low_energy = calculate_lac(
-	HEIGHT_ROD, 
-	DIAMETER_ROD, 
-	CONCENTRATION_IODINE, 
-	TOTAL_MASS_IODINE_ROD, 
-	lac_iodine_low_energy,
-	lac_water_low_energy
-)
-
-# ╔═╡ cd0dfb36-2827-433f-9128-5d2798ee03b7
-lac_iodine_rod_high_energy = calculate_lac(
-	HEIGHT_ROD, 
-	DIAMETER_ROD, 
-	CONCENTRATION_IODINE, 
-	TOTAL_MASS_IODINE_ROD, 
-	lac_iodine_high_energy,
-	lac_water_high_energy
-)
-
-# ╔═╡ ca24f3e0-59eb-4331-bc51-35e4662ffc95
-function lac_to_hu(lac_material, lac_water)
-    return 1000 * (lac_material - lac_water) / lac_water
-end
-
-# ╔═╡ eaeb0664-8656-40f4-bac1-be59b7c6e2b3
-hu_calcium_rod_low_energy = lac_to_hu(lac_calcium_rod_low_energy, lac_water_low_energy)
-
-# ╔═╡ cecad568-58ab-4e73-a460-23d76607b7d2
-hu_calcium_rod_high_energy = lac_to_hu(lac_calcium_rod_high_energy, lac_water_high_energy)
-
-# ╔═╡ 23e2795a-e60b-4aa4-9ca0-1ca7b96d7a60
-hu_iodine_rod_low_energy = lac_to_hu(lac_iodine_rod_low_energy, lac_water_low_energy)
-
-# ╔═╡ 5dc5d863-a008-47bb-ac08-8b1ebfd66e66
-hu_iodine_rod_high_energy = lac_to_hu(lac_iodine_rod_high_energy, lac_water_high_energy)
 
 # ╔═╡ 9830994f-2f85-48fd-aae2-b70330019658
 md"""
@@ -948,21 +837,6 @@ end
 # ╠═a30419d5-2ca0-4af8-bc2b-676dcda84f60
 # ╠═ab512723-b5e5-496c-99c6-2277f70bb0a0
 # ╟─179fb57b-10c6-44c0-a47e-4d0d96f9f71b
-# ╠═cb9c781d-af43-4b86-bce6-f20e85fa9fc5
-# ╠═61b66504-9f2c-43ab-893d-38534a1f52d2
-# ╠═d36cef03-cba4-474a-83d5-786f4f88fe13
-# ╠═02406107-5e5d-4311-9211-feb5ec960b22
-# ╠═30660da1-1406-4f0d-945b-c57cd200d547
-# ╠═8881b973-3fac-4bf7-8f7c-fc6496e2e77d
-# ╠═7ab8d452-4768-4aef-b026-89c0984218f1
-# ╠═47ea20b3-01e3-4e48-a446-9d54aeefde40
-# ╠═f8c6b4ea-af7d-47a0-a837-169522187b26
-# ╠═cd0dfb36-2827-433f-9128-5d2798ee03b7
-# ╠═ca24f3e0-59eb-4331-bc51-35e4662ffc95
-# ╠═eaeb0664-8656-40f4-bac1-be59b7c6e2b3
-# ╠═cecad568-58ab-4e73-a460-23d76607b7d2
-# ╠═23e2795a-e60b-4aa4-9ca0-1ca7b96d7a60
-# ╠═5dc5d863-a008-47bb-ac08-8b1ebfd66e66
 # ╟─9830994f-2f85-48fd-aae2-b70330019658
 # ╠═72c7e682-58db-4577-be77-10d5376604e8
 # ╟─0f7faad8-73cb-4417-8048-fca690c3e2db
