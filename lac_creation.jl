@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.40
+# v0.19.42
 
 using Markdown
 using InteractiveUtils
@@ -40,6 +40,96 @@ md"""
 """
 
 # ╔═╡ 42996dc4-bed7-469f-80bf-e88da0abe691
+# function get_mass_fraction_dict(
+# 	solute_elements,
+# 	solvent_elements,
+# 	concentration_solute,
+# 	solute_of_interest)
+	
+# 	# Calculate molar masses of solute elements
+# 	mm_solute_elements = Dict()
+# 	for (element, _) in solute_elements
+# 		mm_element = element.Z / element.ZAratio * g/mol
+# 		mm_solute_elements[element.name] = mm_element
+# 	end
+
+# 	# Calculate molar masses of solvent elements
+# 	mm_solvent_elements = Dict()
+# 	for (element, _) in solvent_elements
+# 		mm_element = element.Z / element.ZAratio * g/mol
+# 		mm_solvent_elements[element.name] = mm_element
+# 	end
+
+# 	# Calculate total molar mass of solute
+# 	mm_solute = 0g/mol
+# 	for (element, count) in solute_elements
+# 		mm_solute += mm_solute_elements[element.name] * count
+# 	end
+
+# 	# Calculate total molar mass of solvent
+# 	mm_solvent = 0g/mol
+# 	for (element, count) in solvent_elements
+# 		mm_solvent += mm_solvent_elements[element.name] * count
+# 	end
+
+# 	# Find the molar mass of the solute of interest
+# 	mm_solute_of_interest = mm_solute_elements[solute_of_interest]
+
+# 	# Calculate the moles of the solute of interest
+# 	moles_solute_of_interest = concentration_solute / mm_solute_of_interest * cm^3
+
+# 	# Calculate mass of the solute compound
+# 	mass_solute_compound = moles_solute_of_interest * mm_solute
+
+# 	# Calculate masses of individual solute elements
+# 	mass_solute_elements = Dict()
+# 	for (element, count) in solute_elements
+# 		mass_element = count * moles_solute_of_interest * mm_solute_elements[element.name]
+# 		mass_solute_elements[element.name] = mass_element
+# 	end
+
+# 	# Calculate the mass of solvent needed
+# 	mass_solvent = 1g - mass_solute_compound
+
+# 	# Calculate moles of the solvent compound
+# 	moles_solvent = mass_solvent / mm_solvent
+
+# 	# Calculate masses of individual solvent elements
+# 	mass_solvent_elements = Dict()
+# 	for (element, count) in solvent_elements
+# 		mass_element = count * moles_solvent * mm_solvent_elements[element.name]
+# 		mass_solvent_elements[element.name] = mass_element
+# 	end
+
+# 	# Combine masses of solute and solvent elements
+# 	combined_masses = Dict()
+# 	for (symbol, mass) in mass_solute_elements
+# 		combined_masses[symbol] = mass
+# 	end
+# 	for (symbol, mass) in mass_solvent_elements
+# 		if haskey(combined_masses, symbol)
+# 			combined_masses[symbol] += mass
+# 		else
+# 			combined_masses[symbol] = mass
+# 		end
+# 	end
+
+# 	# Calculate mass fractions
+# 	mass_fractions = Dict()
+# 	total_mass_solution = 1g
+# 	for (symbol, mass) in combined_masses
+# 		mass_fractions[symbol] = mass / total_mass_solution
+# 	end
+
+# 	mass_fracs_updated = Dict{Int, Float64}(
+# 	    Elements[Symbol(element)].Z => value
+# 	    for (element, value) in mass_fractions
+# 	)
+
+# 	return mass_fracs_updated
+# end
+
+# ╔═╡ 5f26ca76-c776-4f58-85c2-abcb67f95aad
 function get_mass_fraction_dict(
 	solute_elements,
 	solvent_elements,
@@ -72,33 +162,24 @@ function get_mass_fraction_dict(
 		mm_solvent += mm_solvent_elements[element.name] * count
 	end
 
-	# Find the molar mass of the solute of interest
-	mm_solute_of_interest = mm_solute_elements[solute_of_interest]
-
-	# Calculate the moles of the solute of interest
-	moles_solute_of_interest = concentration_solute / mm_solute_of_interest * cm^3
-
-	# Calculate mass of the solute compound
-	mass_solute_compound = moles_solute_of_interest * mm_solute
+	# Calculate the mass of the solute (assuming total volume is 1 cm^3)
+	mass_solute = concentration_solute * cm^3
 
 	# Calculate masses of individual solute elements
 	mass_solute_elements = Dict()
 	for (element, count) in solute_elements
-		mass_element = count * moles_solute_of_interest * mm_solute_elements[element.name]
-		mass_solute_elements[element.name] = mass_element
+		mass_fraction_element = count * mm_solute_elements[element.name] / mm_solute
+		mass_solute_elements[element.name] = mass_fraction_element * mass_solute
 	end
 
-	# Calculate the mass of solvent needed
-	mass_solvent = 1g - mass_solute_compound
-
-	# Calculate moles of the solvent compound
-	moles_solvent = mass_solvent / mm_solvent
+	# Calculate the mass of solvent needed (assuming the total mass of solution is 1g)
+	mass_solvent = 1g - mass_solute
 
 	# Calculate masses of individual solvent elements
 	mass_solvent_elements = Dict()
 	for (element, count) in solvent_elements
-		mass_element = count * moles_solvent * mm_solvent_elements[element.name]
-		mass_solvent_elements[element.name] = mass_element
+		mass_fraction_element = count * mm_solvent_elements[element.name] / mm_solvent
+		mass_solvent_elements[element.name] = mass_fraction_element * mass_solvent
 	end
 
 	# Combine masses of solute and solvent elements
@@ -181,31 +262,80 @@ md"""
 ## Calcium/Water Mixture
 """
 
+# ╔═╡ 59f0f2eb-0162-4c1c-800a-11507bc15fd5
+hydroxyapatite_solute = (
+Elements[:Calcium] => 10,
+Elements[:Phosphorus] => 6,
+Elements[:Oxygen] => 26,
+Elements[:Hydrogen] => 2
+)
+
+# ╔═╡ 6e79167f-bbd1-4d87-a3ca-542f1f18804b
+water_solvent = (
+Elements[:Hydrogen] => 2, 
+Elements[:Oxygen] => 1
+)
+
+# ╔═╡ ddb41a39-52c1-45b4-817c-17b5eeb9b01c
+mass_fractions_hydroxyapatite_rod = get_mass_fraction_dict(
+	hydroxyapatite_solute,
+	water_solvent,
+	0.700g/cm^3,
+	"Calcium"
+)
+
+# ╔═╡ 46d5c3fa-c8e9-49f8-bbf1-6544e10877c4
+begin
+	total_fraction = 0
+	for (_, fraction) in mass_fractions_hydroxyapatite_rod
+			total_fraction += fraction
+	end
+	total_fraction
+end
+
+# ╔═╡ 24c13049-8d24-4895-a744-8fd8c1599441
+material_hydroxyapatite_rod = create_material(
+	"Ca (as 2 * Ca5(PO4)3(OH)) in Water",
+	mass_fractions_hydroxyapatite_rod
+)
+
+# ╔═╡ fadaeefb-0043-49b7-a85a-7d11e98be315
+lac_to_hu(
+	μ(material_hydroxyapatite_rod, LOW_ENERGY),
+	LOW_ENERGY
+)
+
+# ╔═╡ deac5298-edec-4a2a-b428-496a3d939fb6
+lac_to_hu(
+	μ(material_hydroxyapatite_rod, HIGH_ENERGY),
+	HIGH_ENERGY
+)
+
 # ╔═╡ 17155640-1c9f-4770-a3d7-3fd2590a6260
 mass_fractions_calcium_rod = get_mass_fraction_dict(
 	(Elements[:Calcium] => 1, Elements[:Chlorine] => 2), 
 	(Elements[:Hydrogen] => 2, Elements[:Oxygen] => 1), 
-	0.200g/cm^3,
+	0.700g/cm^3,
 	"Calcium"
 )
 
 # ╔═╡ 5eef21e1-9401-49d3-950c-00402313ce72
-material_calcium_rod = create_material(
-	"Ca (as CaCl2) in Water",
-	mass_fractions_calcium_rod
-)
+# material_calcium_rod = create_material(
+# 	"Ca (as CaCl2) in Water",
+# 	mass_fractions_calcium_rod
+# )
 
 # ╔═╡ 2995310d-5cc4-42c9-9b0a-b6ed1d223a23
-lac_to_hu(
-	μ(material_calcium_rod, LOW_ENERGY),
-	LOW_ENERGY
-)
+# lac_to_hu(
+# 	μ(material_calcium_rod, LOW_ENERGY),
+# 	LOW_ENERGY
+# )
 
 # ╔═╡ d8c23b76-eda1-4ac5-8b46-d4b70326c8fa
-lac_to_hu(
-	μ(material_calcium_rod, HIGH_ENERGY),
-	HIGH_ENERGY
-)
+# lac_to_hu(
+# 	μ(material_calcium_rod, HIGH_ENERGY),
+# 	HIGH_ENERGY
+# )
 
 # ╔═╡ f22a2b12-1b75-4491-91dd-125879c8a7a0
 md"""
@@ -248,6 +378,7 @@ lac_to_hu(
 # ╟─cdf203de-9266-47e1-b932-3510f10012d0
 # ╟─73b08e7c-8937-4a2c-9eb3-63b8f1b3c174
 # ╠═42996dc4-bed7-469f-80bf-e88da0abe691
+# ╠═5f26ca76-c776-4f58-85c2-abcb67f95aad
 # ╟─894cc8d7-7bfb-439e-b760-b73eab3b3b46
 # ╠═876844a6-e0d0-4fd9-8953-f566371cee05
 # ╟─0ce91def-d568-4a21-b354-48411fa639f9
@@ -256,6 +387,13 @@ lac_to_hu(
 # ╟─d9a4f48c-7121-4ef2-b97b-69b4a152c947
 # ╠═daf47b9b-a421-4906-a785-1f8d4472781c
 # ╟─891c79ed-e27b-4bc6-968e-9bd0f1932ee0
+# ╠═59f0f2eb-0162-4c1c-800a-11507bc15fd5
+# ╠═6e79167f-bbd1-4d87-a3ca-542f1f18804b
+# ╠═ddb41a39-52c1-45b4-817c-17b5eeb9b01c
+# ╠═46d5c3fa-c8e9-49f8-bbf1-6544e10877c4
+# ╠═24c13049-8d24-4895-a744-8fd8c1599441
+# ╠═fadaeefb-0043-49b7-a85a-7d11e98be315
+# ╠═deac5298-edec-4a2a-b428-496a3d939fb6
 # ╠═17155640-1c9f-4770-a3d7-3fd2590a6260
 # ╠═5eef21e1-9401-49d3-950c-00402313ce72
 # ╠═2995310d-5cc4-42c9-9b0a-b6ed1d223a23
