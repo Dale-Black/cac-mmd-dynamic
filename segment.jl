@@ -158,19 +158,37 @@ root = "/dfs7/symolloi-lab/dynamic-cac"
 readdir(root)
 
 # ╔═╡ 2b40ee43-4a4b-430d-95a7-30eb9d459409
-a_path = joinpath(root, readdir(root)[4])
+path = joinpath(root, readdir(root)[13])
+
+# ╔═╡ bcb5c2e8-06cc-4c11-86ac-23b2bb8a1227
+readdir(path)
 
 # ╔═╡ 331f26eb-49f3-415c-88e9-4874c8622060
-joinpath(a_path, readdir(a_path)[25])
+_output_path = joinpath(path, readdir(path)[19])
+
+# ╔═╡ d8a47561-e927-4352-a6ac-c0f5886506b8
+_output_path_high_energy = joinpath(path, readdir(path)[19+9])
+
+# ╔═╡ e0593aca-d7c6-4a51-8c30-925879dbe675
+readdir(_output_path)
 
 # ╔═╡ b7d678bf-22b1-44db-bdc1-ea13e71c82e0
-output_path = joinpath(root, "b", "Cardiac 0.5", "14")
+output_path = joinpath(_output_path, readdir(_output_path)[1])
+
+# ╔═╡ 21528c18-6dc3-43c1-a492-a118045fdccc
+output_path_high_energy = joinpath(_output_path_high_energy, readdir(_output_path_high_energy)[1])
 
 # ╔═╡ b8a51c87-90cf-4259-9061-4e8dc8e0632c
 dcms = dcmdir_parse(output_path)
 
+# ╔═╡ ce086b01-1fb2-423d-bda0-50c30581e449
+dcms_high_energy = dcmdir_parse(output_path_high_energy)
+
 # ╔═╡ b38f92ac-ad86-404b-bf33-118d7f886b36
 dcm_arr = load_dcm_array(dcms);
+
+# ╔═╡ 8b471a42-de79-40b2-8911-75b62576a45a
+dcm_arr_high_energy = load_dcm_array(dcms_high_energy);
 
 # ╔═╡ 33eae10c-3777-4c53-8245-72932a28069d
 header = dcms[1].meta;
@@ -452,7 +470,7 @@ heart_cv_img_bkg = Gray.(heart_cv_img .!= 1);
 heart_cv_img_contour = heart_cv_img .- erode_recursively(heart_cv_img, 20);
 
 # ╔═╡ 55daba01-0c81-4f83-a56a-685e3b7437cb
-heart_cv_img_center = erode_recursively(heart_cv_img, 85);
+heart_cv_img_center = erode_recursively(heart_cv_img, 60);
 
 # ╔═╡ 0ed25a96-821c-4225-bc2e-cc51eedec120
 heart_cv_img_bkg, heart_cv_img_contour, heart_cv_img_center
@@ -558,12 +576,12 @@ let
 	f
 end
 
-# ╔═╡ 200c67b9-bff2-456c-9b74-0ca1c31ee964
+# ╔═╡ 1ac02d8b-0e15-45c0-85cb-0dc9ae0e233a
 md"""
 ## Segment Calcium Inserts
 """
 
-# ╔═╡ 97739511-af5a-46f9-a251-09c1e13ce758
+# ╔═╡ 51d03304-1f67-482a-b765-8cc17fa8f3bb
 function get_insert_centers(dcm, threshold)
 	dcm_slice_thresh = dcm .> threshold
 	
@@ -603,24 +621,23 @@ function get_insert_centers(dcm, threshold)
 	
 end
 
-# ╔═╡ 216c4a93-4acc-4c3e-9856-40ed1daf4611
-centers_a, centers_b = get_insert_centers(dcm_heart, 200);
+# ╔═╡ 5b992b26-9230-434b-90b0-5edeafa9a67d
+insert_threshold = 800
 
-# ╔═╡ 0d5cfc80-8b9a-48bb-ba39-a44a0be16a10
-centers_a
+# ╔═╡ 44d464f5-203a-4f80-bb69-a47f955d3fe4
+centers_a, centers_b = get_insert_centers(dcm_heart, insert_threshold);
 
-# ╔═╡ 15775655-9f2a-4d56-bf66-e919a7dc4284
-centers_b
-
-# ╔═╡ 852bf7a3-04f6-47a0-9009-dff9f186f9cf
+# ╔═╡ a040ca3c-432c-4138-b2a1-fd736cedba9a
 @bind z3 Slider([centers_a[3], centers_b[3]], show_value = true)
 
-# ╔═╡ 6483fd22-acdb-4325-8d67-bd54c08c9a27
+# ╔═╡ 3656904e-2a8c-4a1f-8faa-9eaac3113730
 let
 	msize = 10
 	f = Figure()
 
 	ax = Axis(f[1, 1])
+	# z = div(size(dcm_heart, 3), 2)
+	# heatmap!(mpr[:, :, z]; colormap=:grays)
 	heatmap!(dcm_heart[:, :, z3]; colormap=:grays)
 	scatter!(centers_a[1], centers_a[2], markersize=msize, color=:purple)
 	scatter!(centers_b[1], centers_b[2], markersize=msize, color=:blue)
@@ -628,7 +645,7 @@ let
 	f
 end
 
-# ╔═╡ 649f943d-8838-4258-a108-4de678561d83
+# ╔═╡ 4116d718-454a-45d1-a32b-ece674ab4dca
 # Modify the in_cylinder function to accept Static Vectors
 function _in_cylinder(pt::SVector{3, Int}, pt1::SVector{3, Float64}, pt2::SVector{3, Float64}, radius)
     v = pt2 - pt1
@@ -651,7 +668,7 @@ function _in_cylinder(pt::SVector{3, Int}, pt1::SVector{3, Float64}, pt2::SVecto
     return norm(pt - pb) <= radius
 end
 
-# ╔═╡ 2e72c9bb-e41c-493f-b62f-9cc60531382a
+# ╔═╡ c5b060ff-bd35-48dd-8125-115b792cc9f8
 function create_cylinder(array, pt1, pt2, radius, offset)
     # Convert the points to static arrays
     pt1 = SVector{3, Float64}(pt1)
@@ -683,48 +700,24 @@ function create_cylinder(array, pt1, pt2, radius, offset)
     return Bool.(cylinder)
 end
 
-# ╔═╡ 6b1ee364-7611-4fde-9354-aeee659a127f
-cylinder = create_cylinder(dcm_heart, centers_a, centers_b, 8, -25);
-
-# ╔═╡ f484f26e-5cfc-4b6d-9978-f0a844ddedb9
-begin
-	_background_ring = create_cylinder(dcm_heart, centers_a, centers_b, 12, -25);
-	background_ring = Bool.(_background_ring .- cylinder)
-end;
-
-# ╔═╡ eae6cdb3-9d6a-4c7a-8d64-0f7a0832ae2c
-@bind z Slider(axes(dcm_heart, 3), default=div(size(dcm_heart, 3), 2), show_value=true)
-
-# ╔═╡ b5b42c05-cc36-4c17-b64f-1fed5a83a6ef
-let
-	f = Figure()
-
-	ax = Axis(f[1, 1])
-	heatmap!(dcm_arr[:, :, z]; colormap = :grays)
-	heatmap!(cylinder[:, :, z]; colormap = (:jet, 0.1))
-	heatmap!(background_ring[:, :, z]; colormap = (:viridis, 0.1))
-
-	f
-end
-
-# ╔═╡ 9b66d146-611e-4433-8426-b8f39815d138
+# ╔═╡ f06f71fa-faad-4c58-a32e-9ffe6e2b3fda
 md"""
 ## Segment Calibration Insert
 """
 
-# ╔═╡ ad13b5a6-1232-48ed-b91e-8b23896a0bd3
+# ╔═╡ 8032414b-c061-442d-a808-1d5767f5fb5e
 begin
 	binary_calibration = falses(size(dcm_heart))
 	binary_calibration[centers_a...] = true
 	binary_calibration = dilate(binary_calibration)
 end;
 
-# ╔═╡ d5b62cb5-15ec-421c-a9ba-379b801cde72
+# ╔═╡ 144ef306-393b-4307-998a-d29725d921de
 md"""
 ## Remove Outliers (Air)
 """
 
-# ╔═╡ 479ea014-1200-487f-a851-ee3e45339620
+# ╔═╡ aab2747f-f1d9-4c47-a39a-0eedbdda4533
 function remove_outliers(vector)
     Q1 = quantile(vector, 0.25)
     Q3 = quantile(vector, 0.75)
@@ -733,92 +726,269 @@ function remove_outliers(vector)
     return [x for x in vector if x > lower_bound]
 end
 
-# ╔═╡ 1a196009-3f5f-45d7-9d3f-ad9da9afcd1b
-dcm_heart_clean = remove_outliers(dcm_heart[cylinder]);
+# ╔═╡ e03070e1-ce25-4c16-9526-1f0cf575cf6e
+md"""
+# Score
+"""
 
-# ╔═╡ 71f39103-4ae2-4673-9fe9-7a1a02002d7f
+# ╔═╡ eba2dd20-b8ea-4c1f-8bca-6246e3c0201a
+md"""
+## Ground Truth
+"""
+
+# ╔═╡ d571f6c4-0c15-4177-b7ea-21f345462140
+scan_name = header[(0x0010, 0x0020)]
+
+# ╔═╡ 99178bce-5094-4111-8f6b-457732f5827b
+insert_name = strip(header[(0x0010, 0x0010)], ' ')
+
+# ╔═╡ 286fda87-bd85-4120-b617-f6f170ade96b
+bpm = split(header[(0x018, 0x1030)], " ")[end]
+
+# ╔═╡ 4510aad8-aadc-43c6-b7ac-205692de76ea
+readdir(root)
+
+# ╔═╡ ea2ef273-2e46-4bf8-818c-a067aeed50db
+if insert_name == "a" || insert_name == "b" || insert_name == "c"
+	gt_density = 0.050  # mg/mm^3
+elseif insert_name == "d" || insert_name == "e" || insert_name == "f"
+	gt_density = 0.100  # mg/mm^3
+elseif insert_name == "h" || insert_name == "i" || insert_name == "k"
+	gt_density = 0.250  # mg/mm^3
+elseif insert_name == "l" || insert_name == "m" || insert_name == "n"
+	gt_density = 0.400  # mg/mm^3
+end
+
+# ╔═╡ a89dba5c-265c-4ece-8a9f-69f02402028f
+## Extract diameter
+if insert_name == "a" || insert_name == "d" || insert_name == "h" || insert_name == "l"
+	diameter = 1.2 # mm
+elseif insert_name == "b" || insert_name == "e" || insert_name == "i" || insert_name == "m"
+	diameter = 3.0 # mm
+elseif insert_name == "c" || insert_name == "f" || insert_name == "k" || insert_name == "n"
+	diameter = 5.0 # mm
+end
+
+# ╔═╡ 1e705652-f4fc-4603-bbd8-f75567e80d2b
+cylinder_rad = diameter * 2.0
+
+# ╔═╡ b6cce6d3-0667-4b12-ad54-350f646d3147
+begin
+	cylinder = create_cylinder(dcm_arr, centers_a, centers_b, cylinder_rad, -25)
+
+
+	off_num = 30
+	offa1 = (centers_a[1] + off_num, centers_a[2] + off_num, centers_a[3])
+	offb1 = (centers_b[1] + off_num, centers_b[2] + off_num, centers_b[3])
+
+	offa2 = (centers_a[1] - off_num, centers_a[2] - off_num, centers_a[3])
+	offb2 = (centers_b[1] - off_num, centers_b[2] - off_num, centers_b[3])
+
+	offa3 = (centers_a[1] + off_num, centers_a[2] - off_num, centers_a[3])
+	offb3 = (centers_b[1] + off_num, centers_b[2] - off_num, centers_b[3])
+	
+	offset_cylinder1 = create_cylinder(dcm_arr, offa1, offb1, cylinder_rad, -25)
+	offset_cylinder2 = create_cylinder(dcm_arr, offa2, offb2, cylinder_rad, -25)
+	offset_cylinder3 = create_cylinder(dcm_arr, offa3, offb3, cylinder_rad, -25)
+end;
+
+# ╔═╡ 4574fd78-24bd-466c-9344-a947acf05914
+begin
+	cylinder_clean = remove_outliers(dcm_arr[cylinder])
+	
+	offset_cylinder1_clean = remove_outliers(dcm_arr[offset_cylinder1])
+	offset_cylinder2_clean = remove_outliers(dcm_arr[offset_cylinder2])
+	offset_cylinder3_clean = remove_outliers(dcm_arr[offset_cylinder3])
+end;
+
+# ╔═╡ fb81426a-f0f0-4fe9-93cb-53b26f9f9974
 let
 	f = Figure(size = (1000, 1200))
 	ax = Axis(f[1, 1], title = "Original")
 	hist!(dcm_heart[cylinder])
 
 	ax = Axis(f[2, 1], title = "Clean")
-	hist!(dcm_heart_clean)
+	hist!(cylinder_clean)
 
 	f
 end
 
-# ╔═╡ 7caa6404-7fdb-4b6e-a976-86f63cab282a
-md"""
-# Score
-"""
-
-# ╔═╡ e28e7c8a-51fd-43d6-9291-05501922db07
-md"""
-## Ground Truth
-"""
-
-# ╔═╡ 42b57843-fd04-4671-9257-c17899d59021
-md"""
-!!! warning
-	The ground truth data is dependent on the scan that is being uploaded. This means that the ground truth needs to be dynamic, based on the folder (e.g. phantom scans A, or B, or ...), but right now it is hard coded and likely not accurate depending on the folder you are in
-
-	*TODO: Update this to be dynamic/folder specific*
-"""
-
-# ╔═╡ a8835581-db72-43d3-913d-b62a23607cdc
+# ╔═╡ 6392a95f-9166-46e2-b302-6c0ca832a8e9
 begin
-	gt_density = 0.10 # mg/mm^3
+	background_ring = Bool.(
+		create_cylinder(dcm_heart, centers_a, centers_b, cylinder_rad + 6, -25) .- cylinder
+	)
 
-	# π * (diameter/2)^2 * length
-	gt_volume = π * (5/2)^2 * 7 # mm3
-	gt_mass = gt_density * gt_volume
+	offset_background_ring1 = Bool.(
+		create_cylinder(dcm_heart, offa1, offb1, cylinder_rad + 6, -25) .- offset_cylinder1
+	)
+
+	offset_background_ring2 = Bool.(
+		create_cylinder(dcm_heart, offa2, offb2, cylinder_rad + 6, -25) .- offset_cylinder2
+	)
+
+	offset_background_ring3 = Bool.(
+		create_cylinder(dcm_heart, offa3, offb3, cylinder_rad + 6, -25) .- offset_cylinder3
+	)
+end;
+
+# ╔═╡ 00ec9d0c-ba05-4116-b43d-d9514745f61e
+@bind z Slider(axes(dcm_heart, 3), default=div(size(dcm_heart, 3), 2), show_value=true)
+
+# ╔═╡ 40fcb041-dbe5-444f-ba30-1f3c99c34699
+let
+	idxs = getindex.(findall(isone, cylinder[:, :, z]), [1 2])
+	idxs_ring = getindex.(findall(isone, background_ring[:, :, z]), [1 2])
+	alpha = 0.25
+
+	f = Figure(size = (800, 800))
+
+	ax = Axis(f[1, 1], title = "Region Of Interest")
+	heatmap!(dcm_arr[:, :, z]; colormap = :grays)
+	heatmap!(cylinder[:, :, z]; colormap = (:viridis, alpha))
+	heatmap!(background_ring[:, :, z]; colormap = (:jet, alpha))
+
+	ax = Axis(f[2, 1], title = "Offset Background 1")
+	heatmap!(dcm_arr[:, :, z]; colormap = :grays)
+	heatmap!(offset_cylinder1[:, :, z]; colormap = (:viridis, alpha))
+	heatmap!(offset_background_ring1[:, :, z]; colormap = (:jet, alpha))
+
+	ax = Axis(f[1, 2], title = "Offset Background 2")
+	heatmap!(dcm_arr[:, :, z]; colormap = :grays)
+	heatmap!(offset_cylinder2[:, :, z]; colormap = (:viridis, alpha))
+	heatmap!(offset_background_ring2[:, :, z]; colormap = (:jet, alpha))
+
+
+	ax = Axis(f[2, 2], title = "Offset Background 3")
+	heatmap!(dcm_arr[:, :, z]; colormap = :grays)
+	heatmap!(offset_cylinder3[:, :, z]; colormap = (:viridis, alpha))
+	heatmap!(offset_background_ring3[:, :, z]; colormap = (:jet, alpha))
+	f
 end
 
-# ╔═╡ a7c997e6-2dcf-487e-8b9d-3524c7a0ea27
+# ╔═╡ ee307f60-d30c-484a-b741-6c133d5df76f
+begin
+	background_clean = remove_outliers(dcm_arr[background_ring])
+	
+	offset_background_ring1_clean = remove_outliers(dcm_arr[offset_background_ring1])
+	offset_background_ring2_clean = remove_outliers(dcm_arr[offset_background_ring2])
+	offset_background_ring3_clean = remove_outliers(dcm_arr[offset_background_ring3])
+end;
+
+# ╔═╡ f97f495d-6e26-4a25-86ef-b96a8e2c110a
+num_inserts = 3
+
+# ╔═╡ 3dca96c2-2b26-4649-9fb7-9e5f74188034
+gt_length = 7 #mm
+
+# ╔═╡ 922f7de9-2bbd-46a6-8537-d1d2bc8e1c33
+# π * (diameter/2)^2 * length * num_inserts
+gt_volume = π * (diameter/2)^2 * gt_length * num_inserts # mm^3
+
+# ╔═╡ 7805cc9e-aac1-44d7-8317-647bc6dfd8d5
+gt_mass = gt_density * gt_volume
+
+# ╔═╡ f0939235-fced-4b19-8787-27ce79a6588b
+md"""
+## Dual-Energy Triplet MMD (2014)
+"""
+
+# ╔═╡ f101e9c2-a72b-4257-b87e-d51e25d843b0
+header_high_energy = dcms_high_energy[1].meta
+
+# ╔═╡ 2a3e9e59-8814-4bb7-abcf-d0e979102d93
+keV_low_energy = parse(Int32, split(header[(0x0008, 0x103e)], " ")[end - 1])
+
+# ╔═╡ f7c7de03-402d-44d2-959f-a372094292f6
+keV_high_energy = parse(Int32, split(header_high_energy[(0x0008, 0x103e)], " ")[end - 1])
+
+# ╔═╡ 9f2d60a0-35e8-4c01-90ab-08cdcc047f8d
+dcm_arr[cylinder]
+
+# ╔═╡ 5ed77992-3635-4f2e-8f4f-8ebb0c27a3b0
+dcm_arr_high_energy[cylinder]
+
+# ╔═╡ 396efdb7-8801-4c99-9e40-3caba8b0efc7
+md"""
+## Dual-Energy Multiplet MMD (2021)
+"""
+
+# ╔═╡ f7f33444-2f4b-43de-85ed-46941dfe51bc
+md"""
+## Single-Energy Material-Sparcity MMD (2021)
+"""
+
+# ╔═╡ 41952eff-5d1c-45d7-8b0e-307fc1e11969
 md"""
 ## Volume Fraction
 """
 
-# ╔═╡ 611528e5-d64c-4d01-ab42-e32a8dcda37a
-hu_calcium_400 = mean(dcm_heart[binary_calibration])
+# ╔═╡ ff55abc9-5e47-4f6f-aefa-e107196e7019
+hu_calcium_400 = mean(dcm_arr[binary_calibration])
 
-# ╔═╡ a81a5f9d-359b-454d-bc29-d8770bb1a078
-std(dcm_heart[binary_calibration])
+# ╔═╡ 66309816-cc0e-4f29-afb5-f47fb026ce29
+std(dcm_arr[binary_calibration])
 
-# ╔═╡ 976ddafe-2806-4ba8-b6ed-32e36939f2c5
+# ╔═╡ fa2ba92c-c62c-4c88-888d-7776c139d21b
 ρ_calcium_400 = 0.400 # mg/mm^3
 
-# ╔═╡ fe5bd946-d089-45b7-b396-81928e4e6d6d
-voxel_size = voxel_dimensions[1] * voxel_dimensions[2] * voxel_dimensions[3] # mm^3
+# ╔═╡ 7b7a8db8-5430-4ec9-b89e-e8789545268b
+begin
+	hu_heart_tissue_bkg = mean(background_clean)
+	
+	hu_heart_tissue_bkg_offset1 = mean(offset_background_ring1_clean)
+	hu_heart_tissue_bkg_offset2 = mean(offset_background_ring2_clean)
+	hu_heart_tissue_bkg_offset3 = mean(offset_background_ring3_clean)
+end;
 
-# ╔═╡ faa8104f-b316-45fa-a733-82611099ea71
-hu_heart_tissue_bkg = mean(dcm_heart[background_ring])
+# ╔═╡ 4ee6400a-00e4-414b-96ff-7dfb6f112e17
+voxel_size = voxel_dimensions[1] * voxel_dimensions[2] * voxel_dimensions[3]
 
-# ╔═╡ 729d6ef4-5427-4a1c-af66-460e83505187
-vf_mass = score(dcm_heart_clean, hu_calcium_400, hu_heart_tissue_bkg, voxel_size, ρ_calcium_400, VolumeFraction())
+# ╔═╡ 18655ac7-c930-41d4-a152-e116d970885e
+vf_mass = score(cylinder_clean, hu_calcium_400, hu_heart_tissue_bkg, voxel_size, ρ_calcium_400, VolumeFraction())
 
-# ╔═╡ 88c88bc1-51f3-4c5c-8d5d-5eb9c0e6b64e
+# ╔═╡ 6f7c38bc-1573-494e-8758-85d55402a7ec
+begin
+	vf_mass_offset1 = score(offset_cylinder1_clean, hu_calcium_400, hu_heart_tissue_bkg_offset1, voxel_size, ρ_calcium_400, VolumeFraction())
+	vf_mass_offset2 = score(offset_cylinder2_clean, hu_calcium_400, hu_heart_tissue_bkg_offset2, voxel_size, ρ_calcium_400, VolumeFraction())
+	vf_mass_offset3 = score(offset_cylinder3_clean, hu_calcium_400, hu_heart_tissue_bkg_offset3, voxel_size, ρ_calcium_400, VolumeFraction())
+end;
+
+# ╔═╡ 6a353073-25b7-4f76-a53c-6d17210365c5
+begin
+	vf_mass_bkg_mean = mean([vf_mass_offset1, vf_mass_offset2, vf_mass_offset3])
+	vf_mass_bkg_std = std([vf_mass_offset1, vf_mass_offset2, vf_mass_offset3])
+end;
+
+# ╔═╡ 21f5cb75-2ee7-4e3e-a524-9acfc045e811
+vf_mass_bkg_mean, vf_mass_bkg_std
+
+# ╔═╡ 78a84775-25ae-4258-ba1d-d11512e275b0
 md"""
 ## Agatston
 """
 
-# ╔═╡ 3b2a39ca-b19a-4333-86b5-2672bced55d1
-begin
-	overlayed_mask = zeros(size(dcm_arr))
-	for z in axes(dcm_arr, 3)
-		overlayed_mask = dcm_arr[:, :, z] .* heart_mask
-	end
-end
-
-# ╔═╡ ba9b8451-023c-400c-8555-11324b092cbb
-kV = 120
-
-# ╔═╡ 8f32acdc-3ade-44b9-82f4-bf5031c0a9da
+# ╔═╡ 9af2cabf-b7f1-48fa-b678-92ab8564eb2a
 mass_cal_factor = ρ_calcium_400 / hu_calcium_400
 
-# ╔═╡ 0af83bc7-9bfd-4efd-8a6c-3b85eae45e75
-a_agatston, a_volume, a_mass = score(overlayed_mask, voxel_dimensions, mass_cal_factor, Agatston(); kV=kV)
+# ╔═╡ 099df6c8-1cc0-4179-81cf-d0c8b866ffcc
+kV = 100
+
+# ╔═╡ 3c813f77-eca9-4dbe-9a0b-a1b605e5d487
+a_agatston, a_volume, a_mass = score(cylinder_clean, voxel_dimensions, mass_cal_factor, Agatston(); kV=kV)
+
+# ╔═╡ f22cbf39-8248-4731-8601-0a7e63abdab9
+begin
+	_, _, a_mass_offset1 = score(offset_cylinder1_clean, voxel_dimensions, mass_cal_factor, Agatston(); kV=kV)
+	_, _, a_mass_offset2 = score(offset_cylinder2_clean, voxel_dimensions, mass_cal_factor, Agatston(); kV=kV)
+	_, _, a_mass_offset3 = score(offset_cylinder3_clean, voxel_dimensions, mass_cal_factor, Agatston(); kV=kV)
+end;
+
+# ╔═╡ 4e5258a2-1530-4a0f-8540-0d1160dbde7e
+begin
+	a_mass_bkg_mean = mean([a_mass_offset1, a_mass_offset2, a_mass_offset3])
+	a_mass_bkg_std = std([a_mass_offset1, a_mass_offset2, a_mass_offset3])
+end;
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -2671,10 +2841,16 @@ version = "3.5.0+0"
 # ╠═13c0d236-50cf-4c97-9604-13699cdd7979
 # ╠═58292b74-3eb9-4aeb-b2e1-497ee8263ff1
 # ╠═2b40ee43-4a4b-430d-95a7-30eb9d459409
+# ╠═bcb5c2e8-06cc-4c11-86ac-23b2bb8a1227
 # ╠═331f26eb-49f3-415c-88e9-4874c8622060
+# ╠═d8a47561-e927-4352-a6ac-c0f5886506b8
+# ╠═e0593aca-d7c6-4a51-8c30-925879dbe675
 # ╠═b7d678bf-22b1-44db-bdc1-ea13e71c82e0
+# ╠═21528c18-6dc3-43c1-a492-a118045fdccc
 # ╠═b8a51c87-90cf-4259-9061-4e8dc8e0632c
+# ╠═ce086b01-1fb2-423d-bda0-50c30581e449
 # ╠═b38f92ac-ad86-404b-bf33-118d7f886b36
+# ╠═8b471a42-de79-40b2-8911-75b62576a45a
 # ╠═33eae10c-3777-4c53-8245-72932a28069d
 # ╟─3ad9eb7c-9241-4a06-8308-b6ba33aa492f
 # ╠═a9d3bcad-ad93-446c-91b4-711d24c0b1aa
@@ -2732,40 +2908,61 @@ version = "3.5.0+0"
 # ╠═8fba68fa-ff44-4962-9d6f-9b274ba102b1
 # ╟─6fba9862-e8e5-4faf-8443-ff85c06c30d1
 # ╟─97e205d4-9ad5-4cf4-9b64-fd0d09d5bc32
-# ╟─200c67b9-bff2-456c-9b74-0ca1c31ee964
-# ╠═97739511-af5a-46f9-a251-09c1e13ce758
-# ╠═216c4a93-4acc-4c3e-9856-40ed1daf4611
-# ╠═0d5cfc80-8b9a-48bb-ba39-a44a0be16a10
-# ╠═15775655-9f2a-4d56-bf66-e919a7dc4284
-# ╟─852bf7a3-04f6-47a0-9009-dff9f186f9cf
-# ╟─6483fd22-acdb-4325-8d67-bd54c08c9a27
-# ╠═649f943d-8838-4258-a108-4de678561d83
-# ╠═2e72c9bb-e41c-493f-b62f-9cc60531382a
-# ╠═6b1ee364-7611-4fde-9354-aeee659a127f
-# ╠═f484f26e-5cfc-4b6d-9978-f0a844ddedb9
-# ╟─eae6cdb3-9d6a-4c7a-8d64-0f7a0832ae2c
-# ╟─b5b42c05-cc36-4c17-b64f-1fed5a83a6ef
-# ╟─9b66d146-611e-4433-8426-b8f39815d138
-# ╠═ad13b5a6-1232-48ed-b91e-8b23896a0bd3
-# ╟─d5b62cb5-15ec-421c-a9ba-379b801cde72
-# ╠═479ea014-1200-487f-a851-ee3e45339620
-# ╠═1a196009-3f5f-45d7-9d3f-ad9da9afcd1b
-# ╟─71f39103-4ae2-4673-9fe9-7a1a02002d7f
-# ╟─7caa6404-7fdb-4b6e-a976-86f63cab282a
-# ╟─e28e7c8a-51fd-43d6-9291-05501922db07
-# ╟─42b57843-fd04-4671-9257-c17899d59021
-# ╠═a8835581-db72-43d3-913d-b62a23607cdc
-# ╟─a7c997e6-2dcf-487e-8b9d-3524c7a0ea27
-# ╠═611528e5-d64c-4d01-ab42-e32a8dcda37a
-# ╠═a81a5f9d-359b-454d-bc29-d8770bb1a078
-# ╠═976ddafe-2806-4ba8-b6ed-32e36939f2c5
-# ╠═fe5bd946-d089-45b7-b396-81928e4e6d6d
-# ╠═faa8104f-b316-45fa-a733-82611099ea71
-# ╠═729d6ef4-5427-4a1c-af66-460e83505187
-# ╟─88c88bc1-51f3-4c5c-8d5d-5eb9c0e6b64e
-# ╠═3b2a39ca-b19a-4333-86b5-2672bced55d1
-# ╠═ba9b8451-023c-400c-8555-11324b092cbb
-# ╠═8f32acdc-3ade-44b9-82f4-bf5031c0a9da
-# ╠═0af83bc7-9bfd-4efd-8a6c-3b85eae45e75
+# ╟─1ac02d8b-0e15-45c0-85cb-0dc9ae0e233a
+# ╠═51d03304-1f67-482a-b765-8cc17fa8f3bb
+# ╠═5b992b26-9230-434b-90b0-5edeafa9a67d
+# ╠═44d464f5-203a-4f80-bb69-a47f955d3fe4
+# ╟─a040ca3c-432c-4138-b2a1-fd736cedba9a
+# ╟─3656904e-2a8c-4a1f-8faa-9eaac3113730
+# ╠═4116d718-454a-45d1-a32b-ece674ab4dca
+# ╠═c5b060ff-bd35-48dd-8125-115b792cc9f8
+# ╟─f06f71fa-faad-4c58-a32e-9ffe6e2b3fda
+# ╠═8032414b-c061-442d-a808-1d5767f5fb5e
+# ╟─144ef306-393b-4307-998a-d29725d921de
+# ╠═aab2747f-f1d9-4c47-a39a-0eedbdda4533
+# ╟─e03070e1-ce25-4c16-9526-1f0cf575cf6e
+# ╟─eba2dd20-b8ea-4c1f-8bca-6246e3c0201a
+# ╠═d571f6c4-0c15-4177-b7ea-21f345462140
+# ╠═99178bce-5094-4111-8f6b-457732f5827b
+# ╠═286fda87-bd85-4120-b617-f6f170ade96b
+# ╠═4510aad8-aadc-43c6-b7ac-205692de76ea
+# ╠═ea2ef273-2e46-4bf8-818c-a067aeed50db
+# ╠═a89dba5c-265c-4ece-8a9f-69f02402028f
+# ╠═1e705652-f4fc-4603-bbd8-f75567e80d2b
+# ╠═b6cce6d3-0667-4b12-ad54-350f646d3147
+# ╠═4574fd78-24bd-466c-9344-a947acf05914
+# ╟─fb81426a-f0f0-4fe9-93cb-53b26f9f9974
+# ╠═6392a95f-9166-46e2-b302-6c0ca832a8e9
+# ╟─00ec9d0c-ba05-4116-b43d-d9514745f61e
+# ╟─40fcb041-dbe5-444f-ba30-1f3c99c34699
+# ╠═ee307f60-d30c-484a-b741-6c133d5df76f
+# ╠═f97f495d-6e26-4a25-86ef-b96a8e2c110a
+# ╠═3dca96c2-2b26-4649-9fb7-9e5f74188034
+# ╠═922f7de9-2bbd-46a6-8537-d1d2bc8e1c33
+# ╠═7805cc9e-aac1-44d7-8317-647bc6dfd8d5
+# ╟─f0939235-fced-4b19-8787-27ce79a6588b
+# ╠═f101e9c2-a72b-4257-b87e-d51e25d843b0
+# ╠═2a3e9e59-8814-4bb7-abcf-d0e979102d93
+# ╠═f7c7de03-402d-44d2-959f-a372094292f6
+# ╠═9f2d60a0-35e8-4c01-90ab-08cdcc047f8d
+# ╠═5ed77992-3635-4f2e-8f4f-8ebb0c27a3b0
+# ╟─396efdb7-8801-4c99-9e40-3caba8b0efc7
+# ╟─f7f33444-2f4b-43de-85ed-46941dfe51bc
+# ╟─41952eff-5d1c-45d7-8b0e-307fc1e11969
+# ╠═ff55abc9-5e47-4f6f-aefa-e107196e7019
+# ╠═66309816-cc0e-4f29-afb5-f47fb026ce29
+# ╠═fa2ba92c-c62c-4c88-888d-7776c139d21b
+# ╠═7b7a8db8-5430-4ec9-b89e-e8789545268b
+# ╠═4ee6400a-00e4-414b-96ff-7dfb6f112e17
+# ╠═18655ac7-c930-41d4-a152-e116d970885e
+# ╠═6f7c38bc-1573-494e-8758-85d55402a7ec
+# ╠═6a353073-25b7-4f76-a53c-6d17210365c5
+# ╠═21f5cb75-2ee7-4e3e-a524-9acfc045e811
+# ╟─78a84775-25ae-4258-ba1d-d11512e275b0
+# ╠═9af2cabf-b7f1-48fa-b678-92ab8564eb2a
+# ╠═099df6c8-1cc0-4179-81cf-d0c8b866ffcc
+# ╠═3c813f77-eca9-4dbe-9a0b-a1b605e5d487
+# ╠═f22cbf39-8248-4731-8601-0a7e63abdab9
+# ╠═4e5258a2-1530-4a0f-8540-0d1160dbde7e
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
